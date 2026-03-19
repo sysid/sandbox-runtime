@@ -34,3 +34,33 @@ during `prepublish`.
 > `.gitignore` only prevents *untracked* files from being staged.
 > Once force-added (`git add -f dist/`), the files remain tracked
 > regardless of `.gitignore`.
+
+### 3. feat: add upstream HTTP proxy support for corporate proxy environments
+
+**Issue:** [anthropic-experimental/sandbox-runtime#147](https://github.com/anthropic-experimental/sandbox-runtime/issues/147)
+**Files:** `src/sandbox/sandbox-config.ts`, `src/sandbox/http-proxy.ts`, `src/sandbox/sandbox-manager.ts`
+
+Behind a corporate proxy (e.g. cntlm at `127.0.0.1:3128`), SRT's built-in
+proxy connects directly to the internet, causing `ETIMEDOUT`. Traffic must be
+chained through the upstream proxy.
+
+Adds an `upstreamHttpProxy` config option to `NetworkConfigSchema`. When set,
+both CONNECT (HTTPS) and plain HTTP requests are forwarded through the upstream
+proxy instead of connecting directly. The implementation follows the same
+pattern as the existing MITM proxy support but uses TCP instead of Unix sockets
+and applies globally to all allowed traffic.
+
+SOCKS proxy chaining is not implemented (out of scope for the HTTP use case).
+
+**Configuration** (`~/.srt-settings.json`):
+
+```json
+{
+  "network": {
+    "upstreamHttpProxy": "http://127.0.0.1:3128",
+    "allowedDomains": ["api.github.com", "*.ghe.com"],
+    "deniedDomains": []
+  }
+}
+```
+

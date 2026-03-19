@@ -38,6 +38,7 @@ export declare const NetworkConfigSchema: z.ZodObject<{
         socketPath: string;
         domains: string[];
     }>>;
+    upstreamHttpProxy: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     allowedDomains: string[];
     deniedDomains: string[];
@@ -50,6 +51,7 @@ export declare const NetworkConfigSchema: z.ZodObject<{
         socketPath: string;
         domains: string[];
     } | undefined;
+    upstreamHttpProxy?: string | undefined;
 }, {
     allowedDomains: string[];
     deniedDomains: string[];
@@ -62,6 +64,7 @@ export declare const NetworkConfigSchema: z.ZodObject<{
         socketPath: string;
         domains: string[];
     } | undefined;
+    upstreamHttpProxy?: string | undefined;
 }>;
 /**
  * Filesystem configuration schema for validation
@@ -142,6 +145,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
             socketPath: string;
             domains: string[];
         }>>;
+        upstreamHttpProxy: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         allowedDomains: string[];
         deniedDomains: string[];
@@ -154,6 +158,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
             socketPath: string;
             domains: string[];
         } | undefined;
+        upstreamHttpProxy?: string | undefined;
     }, {
         allowedDomains: string[];
         deniedDomains: string[];
@@ -166,6 +171,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
             socketPath: string;
             domains: string[];
         } | undefined;
+        upstreamHttpProxy?: string | undefined;
     }>;
     filesystem: z.ZodObject<{
         denyRead: z.ZodArray<z.ZodString, "many">;
@@ -227,6 +233,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
             socketPath: string;
             domains: string[];
         } | undefined;
+        upstreamHttpProxy?: string | undefined;
     };
     filesystem: {
         denyRead: string[];
@@ -262,6 +269,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
             socketPath: string;
             domains: string[];
         } | undefined;
+        upstreamHttpProxy?: string | undefined;
     };
     filesystem: {
         denyRead: string[];

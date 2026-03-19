@@ -116,6 +116,15 @@ export const NetworkConfigSchema = z.object({
   mitmProxy: MitmProxyConfigSchema.optional().describe(
     'Optional MITM proxy configuration. Routes matching domains through an upstream proxy via Unix socket while SRT still handles allow/deny filtering.',
   ),
+  upstreamHttpProxy: z
+    .string()
+    .url()
+    .optional()
+    .describe(
+      'URL of an upstream HTTP proxy to chain through (e.g., "http://127.0.0.1:3128"). ' +
+        'When set, the built-in proxy forwards allowed requests through this proxy ' +
+        'instead of connecting directly. Useful behind corporate proxies.',
+    ),
 })
 
 /**

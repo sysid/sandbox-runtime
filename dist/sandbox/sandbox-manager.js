@@ -113,6 +113,9 @@ async function startHttpProxyServer(sandboxAskCallback) {
     httpProxyServer = createHttpProxyServer({
         filter: (port, host) => filterNetworkRequest(port, host, sandboxAskCallback),
         getMitmSocketPath,
+        upstreamHttpProxy: config?.network.upstreamHttpProxy
+            ? new URL(config.network.upstreamHttpProxy)
+            : undefined,
     });
     return new Promise((resolve, reject) => {
         if (!httpProxyServer) {

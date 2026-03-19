@@ -20,6 +20,12 @@ export interface HttpProxyServerOptions {
    * If returns undefined, the request will be handled directly.
    */
   getMitmSocketPath?(host: string): string | undefined
+
+  /**
+   * Optional upstream HTTP proxy to chain through for all outbound connections.
+   * When set, traffic is forwarded through this proxy instead of connecting directly.
+   */
+  upstreamHttpProxy?: URL
 }
 
 export function createHttpProxyServer(options: HttpProxyServerOptions): Server {
@@ -134,6 +140,74 @@ export function createHttpProxyServer(options: HttpProxyServerOptions): Server {
 
         socket.on('end', () => mitmSocket.end())
         mitmSocket.on('end', () => socket.end())
+      } else if (options.upstreamHttpProxy) {
+        // Chain through upstream HTTP proxy via CONNECT
+        const upstream = options.upstreamHttpProxy
+        const upstreamPort = parseInt(upstream.port) || 3128
+        logForDebugging(
+          `Routing CONNECT ${hostname}:${port} through upstream proxy at ${upstream.hostname}:${upstreamPort}`,
+        )
+
+        const upstreamSocket = connect(upstreamPort, upstream.hostname, () => {
+          upstreamSocket.write(
+            `CONNECT ${hostname}:${port} HTTP/1.1\r\n` +
+              `Host: ${hostname}:${port}\r\n` +
+              '\r\n',
+          )
+        })
+
+        let responseBuffer = ''
+
+        const onUpstreamData = (chunk: Buffer) => {
+          responseBuffer += chunk.toString()
+
+          const headerEndIndex = responseBuffer.indexOf('\r\n\r\n')
+          if (headerEndIndex !== -1) {
+            upstreamSocket.removeListener('data', onUpstreamData)
+
+            const statusLine = responseBuffer.substring(
+              0,
+              responseBuffer.indexOf('\r\n'),
+            )
+            if (statusLine.includes(' 200 ')) {
+              socket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
+
+              const remainingData = responseBuffer.substring(headerEndIndex + 4)
+              if (remainingData.length > 0) {
+                socket.write(remainingData)
+              }
+
+              upstreamSocket.pipe(socket)
+              socket.pipe(upstreamSocket)
+            } else {
+              logForDebugging(
+                `Upstream proxy rejected CONNECT: ${statusLine}`,
+                { level: 'error' },
+              )
+              socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n')
+              upstreamSocket.destroy()
+            }
+          }
+        }
+
+        upstreamSocket.on('data', onUpstreamData)
+
+        upstreamSocket.on('error', err => {
+          logForDebugging(`Upstream proxy connection failed: ${err.message}`, {
+            level: 'error',
+          })
+          socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n')
+        })
+
+        socket.on('error', err => {
+          logForDebugging(`Client socket error: ${err.message}`, {
+            level: 'error',
+          })
+          upstreamSocket.destroy()
+        })
+
+        socket.on('end', () => upstreamSocket.end())
+        upstreamSocket.on('end', () => socket.end())
       } else {
         // Direct connection (original behavior)
         const serverSocket = connect(port, hostname, () => {
@@ -224,6 +298,42 @@ export function createHttpProxyServer(options: HttpProxyServerOptions): Server {
 
         proxyReq.on('error', err => {
           logForDebugging(`MITM proxy request failed: ${err.message}`, {
+            level: 'error',
+          })
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'text/plain' })
+            res.end('Bad Gateway')
+          }
+        })
+
+        req.pipe(proxyReq)
+      } else if (options.upstreamHttpProxy) {
+        // Forward through upstream HTTP proxy
+        const upstream = options.upstreamHttpProxy
+        const upstreamPort = parseInt(upstream.port) || 3128
+        logForDebugging(
+          `Routing HTTP ${req.method} ${hostname}:${port} through upstream proxy at ${upstream.hostname}:${upstreamPort}`,
+        )
+
+        const proxyReq = httpRequest(
+          {
+            hostname: upstream.hostname,
+            port: upstreamPort,
+            path: req.url,
+            method: req.method,
+            headers: {
+              ...req.headers,
+              host: url.host,
+            },
+          },
+          proxyRes => {
+            res.writeHead(proxyRes.statusCode!, proxyRes.headers)
+            proxyRes.pipe(res)
+          },
+        )
+
+        proxyReq.on('error', err => {
+          logForDebugging(`Upstream proxy request failed: ${err.message}`, {
             level: 'error',
           })
           if (!res.headersSent) {
