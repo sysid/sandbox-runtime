@@ -127,7 +127,9 @@ export function createHttpProxyServer(options) {
                 };
                 upstreamSocket.on('data', onUpstreamData);
                 upstreamSocket.on('error', err => {
-                    logForDebugging(`Upstream proxy connection failed: ${err.message}`, { level: 'error' });
+                    logForDebugging(`Upstream proxy connection failed: ${err.message}`, {
+                        level: 'error',
+                    });
                     socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n');
                 });
                 socket.on('error', err => {
