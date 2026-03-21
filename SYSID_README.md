@@ -103,3 +103,41 @@ printing just 1–2 lines of output.
 `ensureSandboxTmpdir()` is now called from `initialize()` so the directory
 always exists before any sandboxed command runs. `CLAUDE_TMPDIR` can override
 the default `/tmp/claude`.
+
+### 6. fix: make Node fetch() honour sandbox proxy env vars
+
+**Cherry-picked from:** [#172](https://github.com/anthropic-experimental/sandbox-runtime/pull/172)
+**File:** `src/sandbox/sandbox-utils.ts`
+
+Node's built-in `fetch()` (undici) ignores `HTTP_PROXY`/`HTTPS_PROXY` by
+default — unlike `curl` and other CLI tools. On Node 22+, the
+`--use-env-proxy` flag tells undici to read these variables.
+
+`generateProxyEnvVars` now sets `NODE_OPTIONS=--use-env-proxy` (prepended to
+any existing `NODE_OPTIONS`) when proxy ports are configured and Node >= 22.
+
+### 7. feat: add `allowBrowserProcess` config for macOS sandbox
+
+**Cherry-picked from:** [#173](https://github.com/anthropic-experimental/sandbox-runtime/pull/173)
+**Files:** `src/sandbox/macos-sandbox-utils.ts`, `src/sandbox/sandbox-config.ts`, `src/sandbox/sandbox-manager.ts`
+
+Adds an opt-in `allowBrowserProcess` config option (default: `false`) that
+grants the Seatbelt permissions Chromium-based browsers need to launch:
+
+- `mach*` — IPC, bootstrap registration (Crashpad), service lookups
+- `process-info*` — managing renderer/GPU/utility child processes
+- `iokit-open` — GPU and display access
+- `ipc-posix-shm*` — renderer ↔ GPU shared memory
+
+Filesystem and network restrictions remain fully enforced. Only enable when
+browser automation (e.g. `agent-browser`) is needed. The default security
+profile is unchanged.
+
+### 8. fix: report correct version in `srt --version`
+
+**Cherry-picked from:** [#135](https://github.com/anthropic-experimental/sandbox-runtime/pull/135)
+**Files:** `src/cli.ts`, `test/cli.test.ts`
+
+`srt --version` previously reported `1.0.0` because `process.env.npm_package_version`
+is only set when running via `npm run` — not when invoking the binary directly.
+Now reads the version from `package.json` via `createRequire`.

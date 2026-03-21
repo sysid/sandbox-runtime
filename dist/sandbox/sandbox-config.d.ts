@@ -210,6 +210,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
     }>>;
     mandatoryDenySearchDepth: z.ZodOptional<z.ZodNumber>;
     allowPty: z.ZodOptional<z.ZodBoolean>;
+    allowBrowserProcess: z.ZodOptional<z.ZodBoolean>;
     seccomp: z.ZodOptional<z.ZodObject<{
         bpfPath: z.ZodOptional<z.ZodString>;
         applyPath: z.ZodOptional<z.ZodString>;
@@ -252,6 +253,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
     } | undefined;
     mandatoryDenySearchDepth?: number | undefined;
     allowPty?: boolean | undefined;
+    allowBrowserProcess?: boolean | undefined;
     seccomp?: {
         bpfPath?: string | undefined;
         applyPath?: string | undefined;
@@ -288,6 +290,7 @@ export declare const SandboxRuntimeConfigSchema: z.ZodObject<{
     } | undefined;
     mandatoryDenySearchDepth?: number | undefined;
     allowPty?: boolean | undefined;
+    allowBrowserProcess?: boolean | undefined;
     seccomp?: {
         bpfPath?: string | undefined;
         applyPath?: string | undefined;
