@@ -133,3 +133,9 @@ profile is unchanged.
 `srt --version` previously reported `1.0.0` because `process.env.npm_package_version`
 is only set when running via `npm run` — not when invoking the binary directly.
 Now reads the version from `package.json` via `createRequire`.
+
+## Acknowledgments: 
+
+PRs on the original sandbox-runtime repo from:
+- https://github.com/carderne
+- https://github.com/MarlzRana
