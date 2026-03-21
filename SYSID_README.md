@@ -1,7 +1,17 @@
 # sysid branch — Fork Notes
 
+Published as [`@sysid/sandbox-runtime-improved`](https://www.npmjs.com/package/@sysid/sandbox-runtime-improved) on npm.
+
+```bash
+npm install -g @sysid/sandbox-runtime-improved
+```
+
 This branch tracks changes on top of `main` from
 [anthropic-experimental/sandbox-runtime](https://github.com/anthropic-experimental/sandbox-runtime).
+
+## Versioning
+
+`<upstream_version>-sysid.<fork_patch>` — e.g. `0.0.42-sysid.1` is the 1st fork release based on upstream `0.0.42`.
 
 ## Changes vs. main
 
@@ -17,25 +27,7 @@ allowance, network-dependent operations fail inside the sandbox.
 
 The service is read-only and standard for any networked macOS application.
 
-### 2. chore: include built `dist/` for git-based installs
-
-**Commit:** `c9e564e`
-
-Adds the compiled `dist/` directory to the repository despite it being
-listed in `.gitignore`.
-
-**Why:** When this package is installed directly from git
-(`npm install github:user/repo`), npm does **not** run a build step.
-Without `dist/` checked in, git-based installs would ship an empty
-package with no compiled output. Registry installs (`npm install
-@anthropic-ai/sandbox-runtime`) are unaffected because `dist/` is built
-during `prepublish`.
-
-> `.gitignore` only prevents *untracked* files from being staged.
-> Once force-added (`git add -f dist/`), the files remain tracked
-> regardless of `.gitignore`.
-
-### 3. feat: add upstream HTTP proxy support for corporate proxy environments
+### 2. feat: add upstream HTTP proxy support for corporate proxy environments
 
 **Issue:** [anthropic-experimental/sandbox-runtime#147](https://github.com/anthropic-experimental/sandbox-runtime/issues/147)
 **Files:** `src/sandbox/sandbox-config.ts`, `src/sandbox/http-proxy.ts`, `src/sandbox/sandbox-manager.ts`
