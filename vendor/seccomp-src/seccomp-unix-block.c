@@ -65,8 +65,12 @@ int main(int argc, char *argv[]) {
     /* Add rule to block socket(AF_UNIX, ...) */
     /* socket() syscall signature: int socket(int domain, int type, int protocol) */
     /* arg0 = domain (AF_UNIX = 1) */
+    /* Use SCMP_CMP_MASKED_EQ with a 32-bit mask: the domain argument is a 32-bit
+     * int, so the kernel ignores the upper 32 bits of the register. A plain
+     * SCMP_CMP_EQ would compare all 64 bits and miss calls where the upper bits
+     * are set. */
     rc = seccomp_rule_add(ctx, SCMP_ACT_ERRNO(EPERM), SCMP_SYS(socket), 1,
-                          SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
+                          SCMP_A0(SCMP_CMP_MASKED_EQ, 0xffffffff, AF_UNIX));
     if (rc < 0) {
         fprintf(stderr, "Error: Failed to add seccomp rule: %s\n", strerror(-rc));
         seccomp_release(ctx);

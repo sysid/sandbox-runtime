@@ -46,8 +46,8 @@ function cleanupTmpClaude(): void {
 
 describe('macOS Seatbelt Symlink Boundary Validation', () => {
   // Use unique test directories per run
-  // IMPORTANT: Use /private/tmp (not os.tmpdir() which is /var/folders/...)
-  // because /var/folders is automatically allowed by the sandbox via TMPDIR parent rule
+  // Use /private/tmp (not os.tmpdir()) so test paths are outside any
+  // default-allowed write location
   const TEST_ID = Date.now()
   const TEST_BASE_DIR = `/private/tmp/symlink-boundary-test-${TEST_ID}`
   const WORKSPACE_DIR = join(TEST_BASE_DIR, 'workspace')

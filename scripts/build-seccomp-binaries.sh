@@ -100,6 +100,11 @@ build_platform() {
             ls -lh /output/seccomp-unix-block
 
             echo ''
+            echo 'Generating BPF filter...'
+            /output/seccomp-unix-block /output/unix-block.bpf
+            ls -lh /output/unix-block.bpf
+
+            echo ''
             echo 'Building apply-seccomp (no libseccomp dependency)...'
             gcc -o /output/apply-seccomp /src/apply-seccomp.c \
                 -static \
@@ -124,23 +129,7 @@ build_platform() {
             return 1
         }
 
-    # Verify binary exists
-    if [ ! -f "$output_dir/seccomp-unix-block" ]; then
-        echo "✗ Error: Binary not found in $output_dir"
-        return 1
-    fi
-
-    # Generate BPF filter using the seccomp-unix-block binary
-    echo "Generating BPF filter..."
-    local bpf_file="$output_dir/unix-block.bpf"
-
-    # Run the generator to create the BPF file
-    if ! "$output_dir/seccomp-unix-block" "$bpf_file" 2>&1; then
-        echo "✗ Error: Failed to generate BPF filter"
-        return 1
-    fi
-
-    # Verify BPF file was created
+    # Verify BPF file was created inside the container
     if [ ! -f "$bpf_file" ]; then
         echo "✗ Error: BPF file not created"
         return 1
@@ -149,7 +138,6 @@ build_platform() {
     echo "✓ BPF filter generated: $(ls -lh "$bpf_file" | awk '{print $5}')"
 
     # Remove the generator binary (we only need the BPF file)
-    echo "Removing generator binary to save space..."
     rm -f "$output_dir/seccomp-unix-block"
 
     # Verify final state

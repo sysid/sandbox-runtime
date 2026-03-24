@@ -265,11 +265,8 @@ function generateReadRules(
   // directory (e.g. /Users, /Users/chris) even if only a subdirectory like
   // ~/.local is in allowWithinDeny. This only allows metadata reads on
   // directories — not listing contents (readdir) or reading files.
-  if ((config.denyOnly).length > 0) {
-    rules.push(
-      `(allow file-read-metadata`,
-      `  (vnode-type DIRECTORY))`,
-    )
+  if (config.denyOnly.length > 0) {
+    rules.push(`(allow file-read-metadata`, `  (vnode-type DIRECTORY))`)
   }
 
   // Block file movement to prevent bypass via mv/rename
@@ -291,17 +288,6 @@ function generateWriteRules(
   }
 
   const rules: string[] = []
-
-  // Automatically allow TMPDIR parent on macOS when write restrictions are enabled
-  const tmpdirParents = getTmpdirParentIfMacOSPattern()
-  for (const tmpdirParent of tmpdirParents) {
-    const normalizedPath = normalizePathForSandbox(tmpdirParent)
-    rules.push(
-      `(allow file-write*`,
-      `  (subpath ${escapePath(normalizedPath)})`,
-      `  (with message "${logTag}"))`,
-    )
-  }
 
   // Generate allow rules
   for (const pathPattern of config.allowOnly || []) {
@@ -649,31 +635,6 @@ function generateSandboxProfile({
  */
 function escapePath(pathStr: string): string {
   return JSON.stringify(pathStr)
-}
-
-/**
- * Get TMPDIR parent directory if it matches macOS pattern /var/folders/XX/YYY/T/
- * Returns both /var/ and /private/var/ versions since /var is a symlink
- */
-function getTmpdirParentIfMacOSPattern(): string[] {
-  const tmpdir = process.env.TMPDIR
-  if (!tmpdir) return []
-
-  const match = tmpdir.match(
-    /^\/(private\/)?var\/folders\/[^/]{2}\/[^/]+\/T\/?$/,
-  )
-  if (!match) return []
-
-  const parent = tmpdir.replace(/\/T\/?$/, '')
-
-  // Return both /var/ and /private/var/ versions since /var is a symlink
-  if (parent.startsWith('/private/var/')) {
-    return [parent, parent.replace('/private', '')]
-  } else if (parent.startsWith('/var/')) {
-    return [parent, '/private' + parent]
-  }
-
-  return [parent]
 }
 
 /**
