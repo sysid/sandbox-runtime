@@ -4,6 +4,7 @@
 
 
 Based on [Anthropic Sandbox Runtime](https://github.com/anthropic-experimental/sandbox-runtime).
+Why: I just need faster feature cycle-times.
 
 ---
 
@@ -14,11 +15,13 @@ Based on [Anthropic Sandbox Runtime](https://github.com/anthropic-experimental/s
     "network": {
         "upstreamHttpProxy": "http://127.0.0.1:3128"
     },
-    "allowBrowserProcess": false
+    "allowBrowserProcess": false,
+    "allowMachLookup": ["com.1password.*"]
 }
 ```
 - `network.upstreamHttpProxy` - URL of an upstream HTTP proxy to chain through (e.g., `"http://127.0.0.1:3128"`). When set, the built-in proxy forwards allowed requests through this proxy instead of connecting directly. Useful behind corporate proxies. *(fork-only)*
 - `allowBrowserProcess` - Allow browser process operations in the macOS sandbox (boolean, default: false). Grants Mach IPC, bootstrap registration, IOKit, and POSIX shared memory permissions that Chromium-based browsers need to launch. Required for tools like `agent-browser` that spawn a Chrome subprocess. *(fork-only)*
+- `allowMachLookup` - Additional Mach/XPC service names to allow in the macOS sandbox (string array, optional). Names ending with `*` use prefix matching (e.g., `"com.1password.*"`). Use for tools like 1Password CLI that need specific services. *(fork-only, mirrors [upstream PR #92](https://github.com/anthropic-experimental/sandbox-runtime/pull/92))*
 
 ---
 
@@ -369,6 +372,7 @@ Examples:
 - `ignoreViolations` - Object mapping command patterns to arrays of paths where violations should be ignored
 - `enableWeakerNestedSandbox` - Enable weaker sandbox mode for Docker environments (boolean, default: false)
 - `enableWeakerNetworkIsolation` - Allow access to `com.apple.trustd.agent` in the macOS sandbox (boolean, default: false). This is needed for Go programs (`gh`, `gcloud`, `terraform`, `kubectl`, etc.) to verify TLS certificates when using `httpProxyPort` with a MITM proxy and custom CA. **Security warning:** enabling this opens a potential data exfiltration vector through the trustd service.
+- `allowMachLookup` - Additional Mach/XPC service names to allow in the macOS sandbox (string array, optional). Names ending with `*` use prefix matching (e.g., `"com.1password.*"` allows all 1Password services). Others use exact matching.
 
 ### Common Configuration Recipes
 

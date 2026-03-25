@@ -67,7 +67,22 @@ Now reads the version from `package.json` via `createRequire`.
 
 ### 6. feat: add allowMachLookup config for custom Mach service access (macOS)
 
-Allows configuring custom Mach service lookups in macOS sandbox profiles.
+**Files:** `src/sandbox/macos-sandbox-utils.ts`, `src/sandbox/sandbox-config.ts`, `src/sandbox/sandbox-manager.ts`
+
+Adds `allowMachLookup` config option (string array, optional) to specify
+additional Mach/XPC service names in the macOS sandbox profile. Services
+ending with `*` use `global-name-prefix` (wildcard); others use
+`global-name` (exact match).
+
+Use case: tools like 1Password CLI that need specific XPC services.
+
+**Configuration** (`~/.srt-settings.json`):
+
+```json
+{
+  "allowMachLookup": ["com.1password.*", "com.apple.SystemConfiguration.configd", "com.example.myservice"]
+}
+```
 
 ### 7. known limitation: Copilot bash session hangs for outputs > ~4 KB
 

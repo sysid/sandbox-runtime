@@ -934,6 +934,68 @@ describe('macOS Seatbelt Unix Domain Socket Support', () => {
   })
 })
 
+describe('macOS Seatbelt allowMachLookup', () => {
+  // Helper: generate a sandboxed command and return the profile string embedded in it
+  function getProfile(allowMachLookup?: string[]): string {
+    const writeConfig: FsWriteRestrictionConfig = {
+      allowOnly: ['/tmp'],
+      denyWithinAllow: [],
+    }
+    return wrapCommandWithSandboxMacOS({
+      command: 'echo test',
+      needsNetworkRestriction: false,
+      readConfig: undefined,
+      writeConfig,
+      allowMachLookup,
+    })
+  }
+
+  it('should add exact match mach-lookup rule for a service name', () => {
+    if (skipIfNotMacOS()) return
+
+    const profile = getProfile(['com.apple.foo'])
+    // shellquote escapes embedded quotes as \"
+    expect(profile).toContain(
+      '(allow mach-lookup (global-name \\"com.apple.foo\\"))',
+    )
+  })
+
+  it('should add prefix match mach-lookup rule for wildcard service name', () => {
+    if (skipIfNotMacOS()) return
+
+    const profile = getProfile(['com.1password.*'])
+    expect(profile).toContain(
+      '(allow mach-lookup (global-name-prefix \\"com.1password.\\"))',
+    )
+  })
+
+  it('should handle mixed exact and wildcard service names', () => {
+    if (skipIfNotMacOS()) return
+
+    const profile = getProfile(['com.apple.foo', 'com.1password.*'])
+    expect(profile).toContain(
+      '(allow mach-lookup (global-name \\"com.apple.foo\\"))',
+    )
+    expect(profile).toContain(
+      '(allow mach-lookup (global-name-prefix \\"com.1password.\\"))',
+    )
+  })
+
+  it('should not add extra mach-lookup rules for empty array', () => {
+    if (skipIfNotMacOS()) return
+
+    const profile = getProfile([])
+    expect(profile).not.toContain('Custom Mach service lookups')
+  })
+
+  it('should not add extra mach-lookup rules when omitted', () => {
+    if (skipIfNotMacOS()) return
+
+    const profile = getProfile(undefined)
+    expect(profile).not.toContain('Custom Mach service lookups')
+  })
+})
+
 describe('macOS Seatbelt Process Enumeration', () => {
   it('should allow enumerating all process IDs (kern.proc.all sysctl)', () => {
     if (skipIfNotMacOS()) {

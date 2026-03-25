@@ -33,6 +33,7 @@ export interface MacOSSandboxParams {
   ignoreViolations?: IgnoreViolationsConfig | undefined
   allowPty?: boolean
   allowBrowserProcess?: boolean
+  allowMachLookup?: string[]
   allowGitConfig?: boolean
   enableWeakerNetworkIsolation?: boolean
   binShell?: string
@@ -359,6 +360,7 @@ function generateSandboxProfile({
   allowLocalBinding,
   allowPty,
   allowBrowserProcess = false,
+  allowMachLookup,
   allowGitConfig = false,
   enableWeakerNetworkIsolation = false,
   logTag,
@@ -373,6 +375,7 @@ function generateSandboxProfile({
   allowLocalBinding?: boolean
   allowPty?: boolean
   allowBrowserProcess?: boolean
+  allowMachLookup?: string[]
   allowGitConfig?: boolean
   enableWeakerNetworkIsolation?: boolean
   logTag: string
@@ -686,6 +689,22 @@ function generateSandboxProfile({
     profile.push('(allow ipc-posix-shm*)')
   }
 
+  // Custom Mach service lookups
+  if (allowMachLookup && allowMachLookup.length > 0) {
+    profile.push('')
+    profile.push('; Custom Mach service lookups')
+    for (const service of allowMachLookup) {
+      if (service.endsWith('*')) {
+        const prefix = service.slice(0, -1)
+        profile.push(
+          `(allow mach-lookup (global-name-prefix ${escapePath(prefix)}))`,
+        )
+      } else {
+        profile.push(`(allow mach-lookup (global-name ${escapePath(service)}))`)
+      }
+    }
+  }
+
   return profile.join('\n')
 }
 
@@ -714,6 +733,7 @@ export function wrapCommandWithSandboxMacOS(
     writeConfig,
     allowPty,
     allowBrowserProcess = false,
+    allowMachLookup,
     allowGitConfig = false,
     enableWeakerNetworkIsolation = false,
     binShell,
@@ -747,6 +767,7 @@ export function wrapCommandWithSandboxMacOS(
     allowLocalBinding,
     allowPty,
     allowBrowserProcess,
+    allowMachLookup,
     allowGitConfig,
     enableWeakerNetworkIsolation,
     logTag,

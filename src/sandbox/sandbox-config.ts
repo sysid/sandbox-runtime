@@ -267,6 +267,14 @@ export const SandboxRuntimeConfigSchema = z.object({
         'that spawn a Chrome/Chromium subprocess. Without this, Chrome will crash on startup ' +
         'due to denied Mach service lookups and bootstrap registrations.',
     ),
+  allowMachLookup: z
+    .array(z.string().min(1))
+    .optional()
+    .describe(
+      'Additional Mach/XPC service names to allow in the macOS sandbox (macOS only). ' +
+        'Names ending with * use prefix matching (e.g., "com.1password.*"). ' +
+        'Use for tools like 1Password CLI that need specific services.',
+    ),
   seccomp: SeccompConfigSchema.optional().describe(
     'Custom seccomp binary paths (Linux only).',
   ),

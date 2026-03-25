@@ -534,6 +534,10 @@ function getAllowGitConfig(): boolean {
   return config?.filesystem?.allowGitConfig ?? false
 }
 
+function getAllowMachLookup(): string[] | undefined {
+  return config?.allowMachLookup
+}
+
 function getSeccompConfig():
   | { bpfPath?: string; applyPath?: string }
   | undefined {
@@ -669,6 +673,10 @@ async function wrapWithSandbox(
   const allowBrowserProcess =
     customConfig?.allowBrowserProcess ?? config?.allowBrowserProcess
 
+  // Check custom config for additional Mach service lookups (macOS only)
+  const allowMachLookup =
+    customConfig?.allowMachLookup ?? config?.allowMachLookup
+
   switch (platform) {
     case 'macos':
       // macOS sandbox profile supports glob patterns directly, no ripgrep needed
@@ -686,6 +694,7 @@ async function wrapWithSandbox(
         ignoreViolations: getIgnoreViolations(),
         allowPty,
         allowBrowserProcess,
+        allowMachLookup,
         allowGitConfig: getAllowGitConfig(),
         enableWeakerNetworkIsolation: getEnableWeakerNetworkIsolation(),
         binShell,
@@ -1017,6 +1026,7 @@ export interface ISandboxManager {
   getFsWriteConfig(): FsWriteRestrictionConfig
   getNetworkRestrictionConfig(): NetworkRestrictionConfig
   getAllowUnixSockets(): string[] | undefined
+  getAllowMachLookup(): string[] | undefined
   getAllowLocalBinding(): boolean | undefined
   getIgnoreViolations(): Record<string, string[]> | undefined
   getEnableWeakerNestedSandbox(): boolean | undefined
@@ -1057,6 +1067,7 @@ export const SandboxManager: ISandboxManager = {
   getFsWriteConfig,
   getNetworkRestrictionConfig,
   getAllowUnixSockets,
+  getAllowMachLookup,
   getAllowLocalBinding,
   getIgnoreViolations,
   getEnableWeakerNestedSandbox,
